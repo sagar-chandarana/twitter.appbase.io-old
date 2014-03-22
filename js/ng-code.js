@@ -1,29 +1,47 @@
 var twitterApp = angular.module('twitter',['ngRoute']);
 twitterApp.run(function($rootScope,data,$location) {
-    
+
+    $rootScope.cleanup = function (){
+        if($( ".temp-container" ).length >1){
+            //$( ".temp-container" ).remove();
+
+        };
+    }
+
+    $rootScope.$on("$locationChangeStart", function(){
+        console.log('changing loc')
+        $( ".temp-container" ).remove();
+    })
+
     $rootScope.exit = function(){
-    
+        $rootScope.cleanup()
         data.exit();
         $location.path('/login')
+
     }
 
 
     $rootScope.gotoProfile = function(userId){
-    
+        $rootScope.cleanup()
         $location.path('/profile/'+userId)
+
     }
 
     $rootScope.goHome = function(feed){
-    
+
+         $rootScope.cleanup()
         $location.path('/home/'+feed);
+
     }
 
     $rootScope.hideNav = function (){
         $rootScope.$broadcast('hideNav',[1]);
+
     }
 
     $rootScope.showNav = function (){
         $rootScope.$broadcast('showNav');
+
     }
 
 })
@@ -60,6 +78,7 @@ twitterApp.controller('login', function ($scope, data, $location,$rootScope,$rou
     $scope.tweets = [];
     $scope.login=function(){
         data.setCurrentUser($scope.userId);
+         $rootScope.cleanup()
         $location.path('/loading');
     }
 
@@ -100,7 +119,7 @@ twitterApp.controller('login', function ($scope, data, $location,$rootScope,$rou
 
 });
 
-twitterApp.controller('loading', function ($scope, data, $location,$routeParams) {
+twitterApp.controller('loading', function ($rootScope,$scope, data, $location,$routeParams) {
 
     if(data.getCurrentLoggedInUserId()){
         //good!!
@@ -111,6 +130,7 @@ twitterApp.controller('loading', function ($scope, data, $location,$routeParams)
 
     $scope.isNew = false;
     $scope.goHome = function(){
+         $rootScope.cleanup()
         $location.path('/home/personal');
     }
     var userId = data.getCurrentLoggedInUserId();
@@ -186,6 +206,8 @@ twitterApp.controller('home',function($scope,data,$location,$rootScope,$routePar
     if(data.getUserName()){
         //good
     } else {
+
+         $rootScope.cleanup()
         $location.path('/loading')
         return;
     }
@@ -195,6 +217,10 @@ twitterApp.controller('home',function($scope,data,$location,$rootScope,$routePar
     $scope.tweets = [];
     $scope.people = [];
     $scope.userName = data.getUserName();
+
+    $scope.gotoProfile= function(userId){
+        $rootScope.gotoProfile(userId);
+    }
 
     data.getNoFollowers(data.getCurrentLoggedInUserId(),function(n){
         $scope.nFollowers = n;
@@ -364,6 +390,7 @@ twitterApp.controller('home',function($scope,data,$location,$rootScope,$routePar
 });
 
 twitterApp.controller('profile',function($scope,data,$location,$rootScope,$routeParams){
+
     $rootScope.showNav();
 
     if(data.getCurrentLoggedInUserId()){
@@ -378,6 +405,8 @@ twitterApp.controller('profile',function($scope,data,$location,$rootScope,$route
     if(data.getUserName()){
         //good
     } else {
+
+         $rootScope.cleanup()
        $location.path('/loading');
         return;
     }
@@ -385,27 +414,73 @@ twitterApp.controller('profile',function($scope,data,$location,$rootScope,$route
     $scope.tweets = []
     $scope.followers = []
     $scope.following = []
-    $scope.userName = data.getUserName();
+    var userId = $routeParams.userId;
+    $scope.userId = $routeParams.userId;
+    $scope.isMe = data.getCurrentLoggedInUserId() == userId;
+    $scope.userName = $routeParams.userId;
+
+
+    $scope.isBeingFollowed = true;
+    $scope.isReady = false;
+
+    data.getTreePro('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').then(function(aayaObj){
+        //console.log(aayaObj);
+            if((typeof aayaObj.$links['User']== 'undefined' || typeof aayaObj.$links['User'][userId] == 'undefined') ){
+                $scope.isBeingFollowed = false;
+
+            }
+            $scope.isReady = true;
+            $scope.$apply();
+    })
+
+
+    $scope.gotoProfile= function(userId){
+        $rootScope.gotoProfile(userId);
+    }
+
+    $scope.follow = function(userId,i){
+        //console.log(userId,i);
+        $scope.nFollowers++;
+        $scope.isBeingFollowed = true;
+
+        Appbase.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').addLink( Appbase.ref('User:'+userId));
+        Appbase.ref('User:'+userId+'/UGroup:Followers').on('link_added',function(obj){
+            console.log(obj);
+        });
+        Appbase.ref('User:'+userId+'/UGroup:Followers').addLink(Appbase.ref('User:'+data.getCurrentLoggedInUserId()));
+        Appbase.ref('User:'+userId+'/UGroup:Followers').addLink(Appbase.ref('User:'+data.getCurrentLoggedInUserId()));
+        Appbase.ref('User:'+userId+'/UGroup:Followers').addLink(Appbase.ref('User:'+data.getCurrentLoggedInUserId()));
+        $scope.getFollowers();
+    }
+
 
     $scope.unFollow = function(userId,i){
         console.log(userId,i);
-        $scope.following.splice(i,1);
+        if(typeof i != 'undefined') $scope.following.splice(i,1);
         Appbase.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').removeLink( Appbase.ref('User:'+userId));
         Appbase.ref('User:'+userId+'/UGroup:Followers').removeLink(Appbase.ref('User:'+data.getCurrentLoggedInUserId()));
+        if($scope.isMe){
+            $scope.nFollowing--;
+            $scope.getFollowing();
+        }
+        else{
+            $scope.nFollowers--;
+            $scope.isBeingFollowed = false;
+            $scope.getFollowers();
+        }
+
     }
 
-    data.getNoFollowers(data.getCurrentLoggedInUserId(),function(n){
+
+    data.getNoFollowers(userId,function(n){
         $scope.nFollowers = n;
         $scope.$apply();
     })
 
-
-    data.getNoFollowing(data.getCurrentLoggedInUserId(),function(n){
+    data.getNoFollowing(userId,function(n){
         $scope.nFollowing = n;
         $scope.$apply();
     })
-
-    var userId = $routeParams.userId;
 
     $scope.getUserTweets = function(){
         Appbase.ref('User:'+userId).getTree(2,function(treeObj){
@@ -429,6 +504,7 @@ twitterApp.controller('profile',function($scope,data,$location,$rootScope,$route
     }
 
     $scope.getFollowers = function(){
+        $scope.followers = [];
         Appbase.ref('User:'+userId+'/UGroup:Followers').getTree(2,function(treeObj){
             //console.log(treeObj);
             treeObj.$links.$ordered['User'].forEach(function(obj){
@@ -439,6 +515,7 @@ twitterApp.controller('profile',function($scope,data,$location,$rootScope,$route
     }
 
     $scope.getFollowing = function(){
+        $scope.following = [];
         Appbase.ref('User:'+userId+'/UGroup:Following').getTree(2,function(treeObj){
             //console.log(treeObj);
             treeObj.$links.$ordered['User'].forEach(function(obj){
@@ -454,16 +531,6 @@ twitterApp.controller('profile',function($scope,data,$location,$rootScope,$route
         $scope.time = new Date().getTime();
     }
 
-
-    if(data.getCurrentLoggedInUserId()){
-        //good!!
-    } else{
-        $scope.exit();
-        return; //exit the controller too
-    }
-
-    var userId = $routeParams.userId;
-    $scope.isMe = data.getCurrentLoggedInUserId() == userId;
     //console.log(isMe);
 
     $scope.getUserTweets();

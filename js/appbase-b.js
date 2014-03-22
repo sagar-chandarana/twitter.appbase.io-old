@@ -244,7 +244,7 @@ ab.store.obj.put.q.process = function (){
 		return;
 		
 	for (var uuid in ab.store.obj.put.q.objs){
-		if(ab.store.obj.put.q.objs[uuid]){
+		//if(ab.store.obj.put.q.objs[uuid]){
 			ab.store.obj.put.q.objs[uuid] = false;
 			ab.net.putByUuid(ab.store.obj.storage[uuid].generateSelfObj(),function(uuid){
 				return function(err){
@@ -254,7 +254,7 @@ ab.store.obj.put.q.process = function (){
 					}
 				};
 			}(uuid));
-		}
+		//}
 	}
 	ab.store.obj.put.q.isInProcess = false;
 }
@@ -268,7 +268,8 @@ ab.net.listenToUuid = function(uuid, done) {
    ab.socket.emit('get', uuid);
    ab.socket.on(uuid, function(obj) {
        if(obj === "false") {
-			console.log('uuid not found on server');
+
+			console.log(uuid+': not found on server');
 			done(false, false);
        }
        else {

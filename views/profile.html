@@ -1,5 +1,5 @@
 
-<div class="container" style="padding-top: 70px">
+<div class="container temp-container" style="padding-top: 70px">
     <div>
         <div class="row">
             <div class="col-md-3 col-md-offset-1" style="padding-bottom: 50px">
@@ -13,8 +13,8 @@
                                 <div class="panel-body" style="padding:5px !important">
                                     <ul class="list-group" style="margin: 0px;">
                                         <li ng-repeat="f in following" class="list-group-item"> <!--ng-repeat-->
-                                            <button class="btn btn-primary btn-sm" style="background: transparent;color:black;border: 0px;">{{f.$properties.name}}</button>
-                                            <button ng-click="unFollow(f.$key,$index)" class="btn btn-danger btn-sm pull-right">Unfollow</button>
+                                            <button ng-click="gotoProfile(f.$key)" class="btn btn-primary btn-sm" style="background: transparent;color:black;border: 0px;">{{f.$properties.name}}</button>
+                                            <button ng-show="isMe" ng-click="unFollow(f.$key,$index)" class="btn btn-danger btn-sm pull-right">Unfollow</button>
                                         </li>
                                     </ul>
                                 </div>
@@ -49,7 +49,8 @@
                                 <div class="panel-body" style="padding: 5px !important;">
                                     <ul class="list-group" style="margin: 0px;">
                                         <li ng-repeat="f in followers" class="list-group-item"> <!--ng-repeat-->
-                                            {{f.$properties.name}}
+                                            <button ng-click="gotoProfile(f.$key)" class="btn btn-primary btn-sm" style="background: transparent;color:black;border: 0px;">{{f.$properties.name}}</button>
+
                                         </li>
                                     </ul>
                                 </div>
@@ -68,6 +69,8 @@
                           </a>
                           <div class="media-body" style="padding: 2%;">
                             <h1 class="media-heading" style="margin-bottom: 6%;">{{userName}}</h1>
+                            <button ng-show="!isMe && isReady && !isBeingFollowed " ng-click="follow(userId)" class="btn btn-primary btn-sm pull-right">Follow</button>
+                            <button ng-show="!isMe && isReady && isBeingFollowed" ng-click="unFollow(userId)" class="btn btn-danger btn-sm pull-right">Unfollow</button>
                             <span class="label label-info" style="font-size: 1.2em;">Followers {{nFollowers}}</span>
                             <span class="label label-info" style="font-size: 1.2em;">Following {{nFollowing}}</span>
                           </div>

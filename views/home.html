@@ -1,5 +1,5 @@
 
-    <div class="container" style="padding-top: 70px;margin-top: 3%;">
+    <div class="container temp-container" style="padding-top: 70px;margin-top: 3%;">
         <div>
             <div class="row">
                 <div class="col-md-3 col-md-offset-1" style="padding-bottom: 50px">
@@ -40,7 +40,7 @@
                                     <div class="panel-body" style="padding: 5px !important">
                                         <ul class="list-group" style="margin: 0px;">
                                             <li ng-repeat='person in people track by $index' class="list-group-item"> <!--ng-repeat-->
-                                                <button class="btn btn-primary btn-sm" style="background: transparent;color:black;border: 0px;">{{person.$properties.name}}</button>
+                                                <button ng-click="gotoProfile(person.$key)" class="btn btn-primary btn-sm" style="background: transparent;color:black;border: 0px;">{{person.$properties.name}}</button>
                                                 <button ng-click="follow(person.$key,$index)" class="btn btn-primary btn-sm pull-right">Follow</button>
                                             </li>
                                         </ul>
@@ -74,17 +74,17 @@
                     </form >
                     <ul class="list-group" id="tweetstream">
                         <li class="list-group-item" ng-repeat="tweet in tweets"> <!--ng-repeat-->
-                            <h4 class="list-group-item-heading">{{tweet.$properties.by}}
+                            <a><h4 ng-click="gotoProfile(tweet.$properties.by)" style="cursor:pointer" class="list-group-item-heading">{{tweet.$properties.by}}
                                 <!-- span class="badge pull-right">{{tweet.$links.$count['User']}}</span -->
                                 <!-- span class="glyphicon glyphicon-heart pull-right liked" style="padding-right: 5px; color: rgb(41,120,176)"></span -->
-                            </h4>
+                            </h4></a>
                             <p class="list-group-item-text">{{tweet.$properties.msg}}</p>
                         </li>
                         <li class="list-group-item" ng-repeat="tweet in personalTweets"> <!--ng-repeat-->
-                            <h4 class="list-group-item-heading">{{tweet.$properties.by}}
+                            <a><h4 ng-click="gotoProfile(tweet.$properties.by)" style="cursor:pointer" class="list-group-item-heading">{{tweet.$properties.by}}
                                 <!-- span class="badge pull-right">{{tweet.$links.$count['User']}}</span -->
                                 <!-- span class="glyphicon glyphicon-heart pull-right liked" style="padding-right: 5px; color: rgb(41,120,176)"></span -->
-                            </h4>
+                            </h4></a>
                             <p class="list-group-item-text">{{tweet.$properties.msg}}</p>
                         </li>
                     </ul>
