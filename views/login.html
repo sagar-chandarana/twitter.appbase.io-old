@@ -23,11 +23,11 @@
     <div style="padding: 2%;width: 60%;margin:auto;" id="tweets">
 	    <ul class="list-group" id="tweetstream" style="width: 95%;margin:auto;">
 
-		    <li class="list-group-item" ng-repeat="tweet in tweets"> <!--ng-repeat-->
-		        <h4 class="list-group-item-heading">{{tweet.$properties.by}}
+		    <li class="list-group-item" ng-repeat="tweet in tweets | orderBy:'id':true"> <!--ng-repeat-->
+		        <h4 class="list-group-item-heading">{{tweet.properties.by}}
 		            
 		        </h4>
-		        <p class="list-group-item-text">{{tweet.$properties.msg}}</p>
+		        <p class="list-group-item-text">{{tweet.properties.msg}}</p>
 		    </li>
 		    <li class="list-group-item" ng-repeat="tweet in personalTweets"> <!--ng-repeat-->
 		        <h4 class="list-group-item-heading">{{tweet.$properties.by}}

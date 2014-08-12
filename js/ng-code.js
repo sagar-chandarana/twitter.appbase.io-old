@@ -1,4 +1,4 @@
-var twitterApp = angular.module('twitter',['ngRoute']);
+var twitterApp = angular.module('twitter',['ngRoute','ngAppbase']);
 twitterApp.run(function($rootScope,data,$location) {
 
     $rootScope.cleanup = function (){
@@ -72,25 +72,26 @@ twitterApp.config(function($routeProvider){
 
 
 
-twitterApp.controller('login', function ($scope, data, $location,$rootScope,$routeParams) {
+twitterApp.controller('login', function ($scope, data, $location,$rootScope,$appbaseRef) {
+
+
     $rootScope.hideNav();
 
-    $scope.tweets = [];
+    $scope.tweets;
     $scope.login=function(){
         data.setCurrentUser($scope.userId);
          $rootScope.cleanup()
         $location.path('/loading');
     }
 
-
+    $appbaseRef('global/tweets').$bindEdges($scope,'tweets')
 
     if( $scope.userId = data.getCurrentLoggedInUserId()){
         $scope.login();
     }
 
-    $scope.tweets = []
     $scope.getSuperFeed = function(){
-        Appbase.ref('Global:SuperFeed').getTree(1,function(treeObj){
+        AppbaseOld.ref('Global:SuperFeed').getTree(1,function(treeObj){
 
             treeObj.$links.$ordered['Tweet'].forEach(function(ref){
 			
@@ -103,7 +104,7 @@ twitterApp.controller('login', function ($scope, data, $location,$rootScope,$rou
 
         })
 
-        Appbase.ref('Global:SuperFeed').on('link_added',function(abRef){
+        AppbaseOld.ref('Global:SuperFeed').on('link_added',function(abRef){
             if (abRef.getCollection() == 'Tweet'){
                 abRef.getTree(1,function(obj){
                     $scope.tweets.unshift(obj);
@@ -114,7 +115,7 @@ twitterApp.controller('login', function ($scope, data, $location,$rootScope,$rou
 
     }
 
-    $scope.getSuperFeed();
+    //$scope.getSuperFeed();
 
 
 });
@@ -139,10 +140,10 @@ twitterApp.controller('loading', function ($rootScope,$scope, data, $location,$r
 
         if(typeof treeObj.$properties.name == 'undefined' ){
 
-            Appbase.ref('Global:AllUsers').addLink(treeObj.$ref)
+            AppbaseOld.ref('Global:AllUsers').addLink(treeObj.$ref)
             treeObj.$ref.set('name',userId)
-            treeObj.$ref.addLink('Following',Appbase.new('UGroup'));
-            treeObj.$ref.addLink('Followers',Appbase.new('UGroup'));
+            treeObj.$ref.addLink('Following',AppbaseOld.new('UGroup'));
+            treeObj.$ref.addLink('Followers',AppbaseOld.new('UGroup'));
 
             console.log(treeObj);
             data.setUserName( userId);
@@ -156,7 +157,7 @@ twitterApp.controller('loading', function ($rootScope,$scope, data, $location,$r
     });
     /*
     $scope.setName = function(){
-        Appbase.ref('User:'+userId).set('name',$scope.name);
+        AppbaseOld.ref('User:'+userId).set('name',$scope.name);
         data.setUserName($scope.name) ;
         $scope.goHome()
     }*/
@@ -233,14 +234,14 @@ twitterApp.controller('home',function($scope,data,$location,$rootScope,$routePar
         $scope.$apply();
     })
 
-    Appbase.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Followers').on('link_added',function(){
+    AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Followers').on('link_added',function(){
         data.getNoFollowers(data.getCurrentLoggedInUserId(),function(n){
             $scope.nFollowers = n;
             $scope.$apply();
         })
     })
 
-    Appbase.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').on('link_added',function(userObj){
+    AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').on('link_added',function(userObj){
         userObj.getTree(1,function(obj){
             obj.$links.$ordered['Tweet'].forEach(function(tweetRef){
                 //console.log(tweetRef);
@@ -300,13 +301,13 @@ twitterApp.controller('home',function($scope,data,$location,$rootScope,$routePar
         //console.log(userId,i);
         $scope.nFollowing++;
         $scope.people.splice(i,1);
-        Appbase.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').addLink( Appbase.ref('User:'+userId));
-        Appbase.ref('User:'+userId+'/UGroup:Followers').on('link_added',function(obj){
+        AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').addLink( AppbaseOld.ref('User:'+userId));
+        AppbaseOld.ref('User:'+userId+'/UGroup:Followers').on('link_added',function(obj){
             console.log(obj);
         });
-        Appbase.ref('User:'+userId+'/UGroup:Followers').addLink(Appbase.ref('User:'+data.getCurrentLoggedInUserId()));
-        Appbase.ref('User:'+userId+'/UGroup:Followers').addLink(Appbase.ref('User:'+data.getCurrentLoggedInUserId()));
-        Appbase.ref('User:'+userId+'/UGroup:Followers').addLink(Appbase.ref('User:'+data.getCurrentLoggedInUserId()));
+        AppbaseOld.ref('User:'+userId+'/UGroup:Followers').addLink(AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()));
+        AppbaseOld.ref('User:'+userId+'/UGroup:Followers').addLink(AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()));
+        AppbaseOld.ref('User:'+userId+'/UGroup:Followers').addLink(AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()));
     }
 
 
@@ -315,7 +316,7 @@ twitterApp.controller('home',function($scope,data,$location,$rootScope,$routePar
 
         $scope.tweets = []
         $scope.getSuperFeed = function(){
-            Appbase.ref('Global:SuperFeed').getTree(1,function(treeObj){
+            AppbaseOld.ref('Global:SuperFeed').getTree(1,function(treeObj){
 
                 treeObj.$links.$ordered['Tweet'].forEach(function(ref){
                     //console.log(ref);
@@ -328,7 +329,7 @@ twitterApp.controller('home',function($scope,data,$location,$rootScope,$routePar
 
             })
 
-            Appbase.ref('Global:SuperFeed').on('link_added',function(abRef){
+            AppbaseOld.ref('Global:SuperFeed').on('link_added',function(abRef){
                 if (abRef.getCollection() == 'Tweet'){
                     abRef.getTree(1,function(obj){
                         $scope.tweets.unshift(obj);
@@ -359,7 +360,7 @@ twitterApp.controller('home',function($scope,data,$location,$rootScope,$routePar
             })
         });
 
-        Appbase.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').getTree(1,function(treeObj){
+        AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').getTree(1,function(treeObj){
             console.log(treeObj);
             treeObj.$links.$ordered['User'].forEach(function(userObj){
                 console.log(userObj);
@@ -443,13 +444,13 @@ twitterApp.controller('profile',function($scope,data,$location,$rootScope,$route
         $scope.nFollowers++;
         $scope.isBeingFollowed = true;
 
-        Appbase.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').addLink( Appbase.ref('User:'+userId));
-        Appbase.ref('User:'+userId+'/UGroup:Followers').on('link_added',function(obj){
+        AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').addLink( AppbaseOld.ref('User:'+userId));
+        AppbaseOld.ref('User:'+userId+'/UGroup:Followers').on('link_added',function(obj){
             console.log(obj);
         });
-        Appbase.ref('User:'+userId+'/UGroup:Followers').addLink(Appbase.ref('User:'+data.getCurrentLoggedInUserId()));
-        Appbase.ref('User:'+userId+'/UGroup:Followers').addLink(Appbase.ref('User:'+data.getCurrentLoggedInUserId()));
-        Appbase.ref('User:'+userId+'/UGroup:Followers').addLink(Appbase.ref('User:'+data.getCurrentLoggedInUserId()));
+        AppbaseOld.ref('User:'+userId+'/UGroup:Followers').addLink(AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()));
+        AppbaseOld.ref('User:'+userId+'/UGroup:Followers').addLink(AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()));
+        AppbaseOld.ref('User:'+userId+'/UGroup:Followers').addLink(AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()));
         $scope.getFollowers();
     }
 
@@ -457,8 +458,8 @@ twitterApp.controller('profile',function($scope,data,$location,$rootScope,$route
     $scope.unFollow = function(userId,i){
         console.log(userId,i);
         if(typeof i != 'undefined') $scope.following.splice(i,1);
-        Appbase.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').removeLink( Appbase.ref('User:'+userId));
-        Appbase.ref('User:'+userId+'/UGroup:Followers').removeLink(Appbase.ref('User:'+data.getCurrentLoggedInUserId()));
+        AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').removeLink( AppbaseOld.ref('User:'+userId));
+        AppbaseOld.ref('User:'+userId+'/UGroup:Followers').removeLink(AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()));
         if($scope.isMe){
             $scope.nFollowing--;
             $scope.getFollowing();
@@ -483,14 +484,14 @@ twitterApp.controller('profile',function($scope,data,$location,$rootScope,$route
     })
 
     $scope.getUserTweets = function(){
-        Appbase.ref('User:'+userId).getTree(2,function(treeObj){
+        AppbaseOld.ref('User:'+userId).getTree(2,function(treeObj){
             treeObj.$links.$ordered['Tweet'].forEach(function(obj){
                 $scope.tweets.push(obj);
             })
             $scope.$apply();
         })
 
-        Appbase.ref('User:'+userId).on('link_added',function(abRef){
+        AppbaseOld.ref('User:'+userId).on('link_added',function(abRef){
             if (abRef.getCollection() == 'Tweet'){
                 abRef.getTree(1,function(obj){
                     //console.log(obj);
@@ -505,7 +506,7 @@ twitterApp.controller('profile',function($scope,data,$location,$rootScope,$route
 
     $scope.getFollowers = function(){
         $scope.followers = [];
-        Appbase.ref('User:'+userId+'/UGroup:Followers').getTree(2,function(treeObj){
+        AppbaseOld.ref('User:'+userId+'/UGroup:Followers').getTree(2,function(treeObj){
             //console.log(treeObj);
             treeObj.$links.$ordered['User'].forEach(function(obj){
                 $scope.followers.push(obj);
@@ -516,7 +517,7 @@ twitterApp.controller('profile',function($scope,data,$location,$rootScope,$route
 
     $scope.getFollowing = function(){
         $scope.following = [];
-        Appbase.ref('User:'+userId+'/UGroup:Following').getTree(2,function(treeObj){
+        AppbaseOld.ref('User:'+userId+'/UGroup:Following').getTree(2,function(treeObj){
             //console.log(treeObj);
             treeObj.$links.$ordered['User'].forEach(function(obj){
                 $scope.following.push(obj);
@@ -567,7 +568,7 @@ twitterApp.factory('data',function(){
 
     fact.getTreePro = function (link,levels){
         return new Promise(function(resolve,reject){
-            Appbase.ref(link).getTree((typeof levels == 'undefined'? 1: levels),function(treeObj){
+            AppbaseOld.ref(link).getTree((typeof levels == 'undefined'? 1: levels),function(treeObj){
                 //console.log(treeObj);
                 resolve(treeObj);
             })
@@ -575,9 +576,9 @@ twitterApp.factory('data',function(){
     }
 
     fact.addTweet = function(msg){
-        var ab = Appbase.new('Tweet').set('msg',msg).set('by',userName);
-        Appbase.ref('User:'+fact.getCurrentLoggedInUserId()).addLink(ab)
-        Appbase.ref('Global:SuperFeed').addLink(ab);
+        var ab = AppbaseOld.new('Tweet').set('msg',msg).set('by',userName);
+        AppbaseOld.ref('User:'+fact.getCurrentLoggedInUserId()).addLink(ab)
+        AppbaseOld.ref('Global:SuperFeed').addLink(ab);
     }
 
     fact.setCurrentUser = function(userId){
@@ -594,11 +595,11 @@ twitterApp.factory('data',function(){
     };
 
     fact.unLike = function(tweetId){
-        Appbase.ref('Tweet:'+tweetId).linkRef('UGroup:like').removeLink( 'User:'+fact.getCurrentLoggedInUserId());
+        AppbaseOld.ref('Tweet:'+tweetId).linkRef('UGroup:like').removeLink( 'User:'+fact.getCurrentLoggedInUserId());
     };
 
     fact.searchTweets = function(text){
-        Appbase.search({collection:'text',property:'msg',sstring:text},function(tweetRefs){
+        AppbaseOld.search({collection:'text',property:'msg',sstring:text},function(tweetRefs){
 
             Promise.all(tweetRefs.map(function(tweetRef){
                     return new Promise(function(r,rr){
