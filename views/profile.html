@@ -13,8 +13,8 @@
                                 <div class="panel-body" style="padding:5px !important">
                                     <ul class="list-group" style="margin: 0px;">
                                         <li ng-repeat="f in following" class="list-group-item"> <!--ng-repeat-->
-                                            <button ng-click="gotoProfile(f.$key)" class="btn btn-primary btn-sm" style="background: transparent;color:black;border: 0px;">{{f.$properties.name}}</button>
-                                            <button ng-show="isMe" ng-click="unFollow(f.$key,$index)" class="btn btn-danger btn-sm pull-right">Unfollow</button>
+                                            <button ng-click="gotoProfile(f.properties.name)" class="btn btn-primary btn-sm" style="background: transparent;color:black;border: 0px;">{{f.properties.name}}</button>
+                                            <button ng-show="isMe" ng-click="unFollow(f.properties.name,$index)" class="btn btn-danger btn-sm pull-right">Unfollow</button>
                                         </li>
                                     </ul>
                                 </div>
@@ -49,7 +49,7 @@
                                 <div class="panel-body" style="padding: 5px !important;">
                                     <ul class="list-group" style="margin: 0px;">
                                         <li ng-repeat="f in followers" class="list-group-item"> <!--ng-repeat-->
-                                            <button ng-click="gotoProfile(f.$key)" class="btn btn-primary btn-sm" style="background: transparent;color:black;border: 0px;">{{f.$properties.name}}</button>
+                                            <button ng-click="gotoProfile(f.properties.name)" class="btn btn-primary btn-sm" style="background: transparent;color:black;border: 0px;">{{f.properties.name}}</button>
 
                                         </li>
                                     </ul>
@@ -71,8 +71,8 @@
                             <h1 class="media-heading" style="margin-bottom: 6%;">{{userName}}</h1>
                             <button ng-show="!isMe && isReady && !isBeingFollowed " ng-click="follow(userId)" class="btn btn-primary btn-sm pull-right">Follow</button>
                             <button ng-show="!isMe && isReady && isBeingFollowed" ng-click="unFollow(userId)" class="btn btn-danger btn-sm pull-right">Unfollow</button>
-                            <span class="label label-info" style="font-size: 1.2em;">Followers {{nFollowers}}</span>
-                            <span class="label label-info" style="font-size: 1.2em;">Following {{nFollowing}}</span>
+                            <span class="label label-info" style="font-size: 1.2em;">Followers {{followers.length}}</span>
+                            <span class="label label-info" style="font-size: 1.2em;">Following {{following.length}}</span>
                           </div>
                         </div>
                     </div>
@@ -87,6 +87,7 @@
                     <div class="row">
                         <ul class="list-group" id="tweetstream">
                             <li class="list-group-item" ng-repeat="tweet in tweets  | orderBy:'priority':true"> <!--ng-repeat-->
+                                {{properties}}
                                 <h4 class="list-group-item-heading">{{tweet.properties.by}}
                                     <!-- span class="badge pull-right">{{tweet.$links.$count['User']}}</span -->
                                     <!-- span class="glyphicon glyphicon-heart pull-right liked" style="padding-right: 5px; color: rgb(41,120,176)"></span -->

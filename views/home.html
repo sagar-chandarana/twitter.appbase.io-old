@@ -7,8 +7,8 @@
                         <div class="row" style="text-align: center;">
                             <img class="media-object" src="http://demo.dnnrox.com/Portals/_default/Skins/Flatna2/img/icons/user@2x.png" style="width: 35%;margin: auto">
                             <h3 style="margin-top: 10px;">{{userName}}</h3>
-                            <span class="label label-info pull-left" style="width: 45% !important;font-size: 1em;">Followers {{nFollowers}}</span>
-                            <span class="label label-info pull-right" style="width: 45% !important;font-size: 1em;">Following {{nFollowing}}</span>
+                            <span class="label label-info pull-left" style="width: 45% !important;font-size: 1em;">Followers {{followers.length}}</span>
+                            <span class="label label-info pull-right" style="width: 45% !important;font-size: 1em;">Following {{following.length}}</span>
                             <!-- <div class="jumbotron" style="height: 205px">
                                 <img src="img/profile_default.jpg" class="pull-left">
                                 <h3 style="text-align: center">{{userName}}</h3>
@@ -34,14 +34,14 @@
                         <div class="row">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    <h3 class="panel-title" style="text-align: center;">Suggestions</h3>
+                                    <h3 class="panel-title" style="text-align: center;">People on Twitter</h3>
                                 </div>
                                 <div class="container" style="max-width: 273px; max-height: 300px; overflow-y: auto;padding: 0px;">
                                     <div class="panel-body" style="padding: 5px !important">
                                         <ul class="list-group" style="margin: 0px;">
                                             <li ng-repeat='person in people track by $index' class="list-group-item"> <!--ng-repeat-->
-                                                <button ng-click="gotoProfile(person.$key)" class="btn btn-primary btn-sm" style="background: transparent;color:black;border: 0px;">{{person.$properties.name}}</button>
-                                                <button ng-click="follow(person.$key,$index)" class="btn btn-primary btn-sm pull-right">Follow</button>
+                                                <button ng-click="gotoProfile(person.properties.name)" class="btn btn-primary btn-sm" style="background: transparent;color:black;border: 0px;">{{person.properties.name}}</button>
+                                                <!--<button ng-click="follow(person.properties.name,$index)" class="btn btn-primary btn-sm pull-right">Follow</button> -->
                                             </li>
                                         </ul>
                                     </div>
@@ -73,19 +73,21 @@
                         <button type="submit" class="btn btn-primary btn-sm pull-right" style="font-size: 1.2em;height: 40px !important;" id="tweetButton">Tweet</button>
                     </form >
                     <ul class="list-group" id="tweetstream">
-                        <li class="list-group-item" ng-repeat="tweet in tweets"> <!--ng-repeat-->
-                            <a><h4 ng-click="gotoProfile(tweet.$properties.by)" style="cursor:pointer" class="list-group-item-heading">{{tweet.$properties.by}}
+                        <li class="list-group-item" ng-repeat="tweet in tweets  | orderBy:'priority':true"> <!--ng-repeat-->
+                            <a><h4 ng-click="gotoProfile(tweet.properties.by)" style="cursor:pointer" class="list-group-item-heading">{{tweet.properties.by}}
                                 <!-- span class="badge pull-right">{{tweet.$links.$count['User']}}</span -->
                                 <!-- span class="glyphicon glyphicon-heart pull-right liked" style="padding-right: 5px; color: rgb(41,120,176)"></span -->
                             </h4></a>
-                            <p class="list-group-item-text">{{tweet.$properties.msg}}</p>
+                            <p class="list-group-item-text">{{tweet.properties.msg}}</p>
                         </li>
-                        <li class="list-group-item" ng-repeat="tweet in personalTweets"> <!--ng-repeat-->
-                            <a><h4 ng-click="gotoProfile(tweet.$properties.by)" style="cursor:pointer" class="list-group-item-heading">{{tweet.$properties.by}}
+                        <li class="list-group-item" ng-repeat="tweet in personalTweets.concat.apply(personalTweets, arraysOfTweets)  | orderBy:'priority':true">
+                            <!--ng-repeat-->
+                            {{tweet.properties}}
+                            <a><h4 ng-click="gotoProfile(tweet.properties.by)" style="cursor:pointer" class="list-group-item-heading">{{tweet.properties.by}}
                                 <!-- span class="badge pull-right">{{tweet.$links.$count['User']}}</span -->
                                 <!-- span class="glyphicon glyphicon-heart pull-right liked" style="padding-right: 5px; color: rgb(41,120,176)"></span -->
                             </h4></a>
-                            <p class="list-group-item-text">{{tweet.$properties.msg}}</p>
+                            <p class="list-group-item-text">{{tweet.properties.msg}}</p>
                         </li>
                     </ul>
                 </div>

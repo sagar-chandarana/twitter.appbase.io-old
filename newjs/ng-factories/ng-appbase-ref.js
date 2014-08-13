@@ -2,7 +2,7 @@
  * Created by Sagar on 12/8/14.
  */
 angular.module('ngAppbase',[])
- .factory('$appbaseRef',function(){
+ .factory('$appbaseRef',function() {
    var ngAppbaseRef = function(input) {
      /* accepts a path, or an appbase reference and returns ngAppbaseRef,
           a wrapper that supports $bindProperties and $bindEdges, which binds
@@ -19,7 +19,7 @@ angular.module('ngAppbase',[])
 
      var bindProperties = function(remoteScope, varName) {
        ref.on('properties',function(error, ref, vSnap) {
-         if(error){
+         if(error) {
            throw error
            return
          }
@@ -34,9 +34,10 @@ angular.module('ngAppbase',[])
      }
 
      var bindEdges = function(remoteScope, varName) {
+       console.log('binding edges',ref.URL())
        var edges = []
        var toBeDeleted = {}
-       remoteScope[varName] = edges
+       varName && (remoteScope[varName] = edges)
 
        var add = function(name, priority, properties) {
          if(toBeDeleted[name+priority] > 0) {
@@ -118,10 +119,12 @@ angular.module('ngAppbase',[])
          ref.off('edge_removed')
          ref.off('edge_changed')
        })
+
+       return edges
      }
 
      return {
-       $ref: function(){
+       $ref: function() {
          return ref
        },
        $setData: ref.setData,
@@ -129,14 +132,14 @@ angular.module('ngAppbase',[])
        $path: ref.path,
        $URL: ref.URL,
        $setEdge: function($abRef, name ,priority ,callback){
-         ref.setEdge($abRef.$ref(), name, priority, callback)
+         return ref.setEdge($abRef.$ref(), name, priority, callback)
        },
        $removeEdge: ref.removeEdge,
        $inVertex: function() {
-         ngAppbaseRef(ref.inVertex())
+         return ngAppbaseRef(ref.inVertex())
        },
        $outVertex: function(edgeName){
-         ngAppbaseRef(ref.outVertex(edgeName))
+         return ngAppbaseRef(ref.outVertex(edgeName))
        },
        $bindProperties:bindProperties,
        $bindEdges:bindEdges
