@@ -3596,8 +3596,6 @@ ab.net.listenToUuid = function(uuid, done) {
    ab.socket.emit('get', uuid);
    ab.socket.on(uuid, function(obj) {
        if(obj === "false") {
-
-			console.log(uuid+': not found on server');
 			done(false, false);
        }
        else {

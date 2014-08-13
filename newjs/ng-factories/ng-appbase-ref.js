@@ -19,13 +19,16 @@ angular.module('ngAppbase',[])
 
      var bindProperties = function(remoteScope, varName) {
        ref.on('properties',function(error, ref, vSnap) {
+         if(error){
+           throw error
+           return
+         }
          remoteScope.$apply(function(){
            remoteScope[varName] = vSnap.properties()
          })
        })
 
        remoteScope.$on('$destroy', function() {
-         console.log('destroy')
          ref.off('properties')
        })
      }
@@ -41,6 +44,7 @@ angular.module('ngAppbase',[])
            return
          }
          var added;
+         /* using angular filters for ordering
          for(var i = 0; i<edges.length; i++) {
            if(edges[i].priority > priority) {
              remoteScope.$apply(function(){
@@ -50,6 +54,7 @@ angular.module('ngAppbase',[])
              break
            }
          }
+         */
          if(!added) {
            remoteScope.$apply(function(){
              edges.push({name:name,priority:priority,properties:properties})
@@ -78,6 +83,10 @@ angular.module('ngAppbase',[])
        }
 
        ref.on('edge_added',function(error,edgeRef,edgeSnap) {
+         if(error){
+           throw error
+           return
+         }
          edgeRef.on('properties',function(error,r,outVertexSnap) {
            edgeRef.off()
            add(edgeSnap.name(),edgeSnap.priority(),outVertexSnap.properties())
@@ -85,10 +94,18 @@ angular.module('ngAppbase',[])
        })
 
        ref.on('edge_removed',function(error,edgeRef,edgeSnap) {
+         if(error){
+           throw error
+           return
+         }
          remove(edgeSnap.name(),edgeSnap.prevPriority())
        })
 
        ref.on('edge_changed',function(error,edgeRef,edgeSnap) {
+         if(error){
+           throw error
+           return
+         }
          remove(edgeSnap.name(),edgeSnap.prevPriority())
          edgeRef.on('properties',function(error,r,outVertexSnap) {
            edgeRef.off()
@@ -97,7 +114,6 @@ angular.module('ngAppbase',[])
        })
 
        remoteScope.$on('$destroy', function() {
-         console.log('destroy')
          ref.off('edge_added')
          ref.off('edge_removed')
          ref.off('edge_changed')

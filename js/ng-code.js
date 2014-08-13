@@ -1,3 +1,9 @@
+uuid = function() {
+  return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8)
+    return v.toString(16)
+  })
+}
 var twitterApp = angular.module('twitter',['ngRoute','ngAppbase'])
 twitterApp.run(function($rootScope,data,$location) {
   $rootScope.cleanup = function (){
@@ -86,19 +92,53 @@ twitterApp.controller('login', function ($scope, data, $location,$rootScope,$app
   }
   //OLD: $scope.getSuperFeed()
 })
-twitterApp.controller('loading', function ($rootScope,$scope, data, $location,$routeParams) {
+twitterApp.controller('loading', function ($rootScope,$scope, data, $location,$appbaseRef) {
   if(data.getCurrentLoggedInUserId()){
     //good!!
   } else{
     $rootScope.exit()
     return //exit the controller too
   }
-  $scope.isNew = false
   $scope.goHome = function(){
     $rootScope.cleanup()
     $location.path('/home/personal')
   }
+
   var userId = data.getCurrentLoggedInUserId()
+  var userRef = Appbase.create('user',data.getCurrentLoggedInUserId())
+  userRef.on('properties',function(error, ref, snap) {
+    userRef.off()
+    if(error){
+      throw error
+      return
+    }
+
+    if(snap.properties().name === undefined) {
+      Appbase.ref('global/users').setEdge(userRef,userId)
+      userRef.setData({
+        name: userId
+      })
+      userRef.setEdge(Appbase.create('misc'),'following')
+      userRef.setEdge(Appbase.create('misc'),'followers')
+      userRef.setEdge(Appbase.create('misc'),'tweets',function(error){
+        if(error){
+          throw error
+          return
+        }
+        data.setUserName(userId)
+        $scope.$apply(function(){
+          $rootScope.gotoProfile(userId)
+        })
+      })
+    } else {
+      data.setUserName(snap.properties().name)
+      $scope.$apply(function(){
+        $rootScope.gotoProfile(userId)
+      })
+    }
+  })
+
+  /*OLD:
   data.getTreePro('User:'+data.getCurrentLoggedInUserId()).then(function(treeObj){
     console.log(treeObj)
     if(typeof treeObj.$properties.name == 'undefined' ){
@@ -118,6 +158,8 @@ twitterApp.controller('loading', function ($rootScope,$scope, data, $location,$r
       $scope.$apply()
     }
   })
+  */
+
   /*
    $scope.setName = function(){
    AppbaseOld.ref('User:'+userId).set('name',$scope.name)
@@ -211,7 +253,7 @@ twitterApp.controller('home',function($scope,data,$location,$rootScope,$routePar
       })
     })
     userObjs = treeOfUsers.$links.$ordered['User']
-    console.log(userObjs)
+    //console.log(userObjs)
     data.getTreePro('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').then(function(aayaObj){
       //console.log(aayaObj)
       userObjs.forEach(function(userObj){
@@ -233,7 +275,7 @@ twitterApp.controller('home',function($scope,data,$location,$rootScope,$routePar
     $scope.people.splice(i,1)
     AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').addLink( AppbaseOld.ref('User:'+userId))
     AppbaseOld.ref('User:'+userId+'/UGroup:Followers').on('link_added',function(obj){
-      console.log(obj)
+      //console.log(obj)
     })
     AppbaseOld.ref('User:'+userId+'/UGroup:Followers').addLink(AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()))
     AppbaseOld.ref('User:'+userId+'/UGroup:Followers').addLink(AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()))
@@ -279,14 +321,14 @@ twitterApp.controller('home',function($scope,data,$location,$rootScope,$routePar
       })
     })
     AppbaseOld.ref('User:'+data.getCurrentLoggedInUserId()+'/UGroup:Following').getTree(1,function(treeObj){
-      console.log(treeObj)
+      //console.log(treeObj)
       treeObj.$links.$ordered['User'].forEach(function(userObj){
-        console.log(userObj)
+        //console.log(userObj)
         userObj.$ref.getTree(1,function(obj){
           obj.$links.$ordered['Tweet'].forEach(function(tweetRef){
-            console.log(tweetRef)
+            //console.log(tweetRef)
             tweetRef.$ref.getTree(1,function(tObj){
-              console.log(tObj)
+              //console.log(tObj)
               $scope.personalTweets.push(tObj)
               $scope.$apply()
             })
@@ -305,7 +347,7 @@ twitterApp.controller('home',function($scope,data,$location,$rootScope,$routePar
     })
   }
 })
-twitterApp.controller('profile',function($scope,data,$location,$rootScope,$routeParams){
+twitterApp.controller('profile',function($scope,data,$location,$rootScope,$routeParams,$appbaseRef){
   $rootScope.showNav()
   if(data.getCurrentLoggedInUserId()){
     //good!!
@@ -377,6 +419,7 @@ twitterApp.controller('profile',function($scope,data,$location,$rootScope,$route
     $scope.nFollowing = n
     $scope.$apply()
   })
+  /*OLD:
   $scope.getUserTweets = function(){
     AppbaseOld.ref('User:'+userId).getTree(2,function(treeObj){
       treeObj.$links.$ordered['Tweet'].forEach(function(obj){
@@ -415,15 +458,46 @@ twitterApp.controller('profile',function($scope,data,$location,$rootScope,$route
       $scope.$apply()
     })
   }
-  $scope.addTweet = function(){
+  */
+
+  //NEW:
+  var userTweets = Appbase.ref('user/'+data.getCurrentLoggedInUserId()+'/tweets')
+  $scope.addTweet = function() {
+
+    var tweetRef = Appbase.create('tweet')
+    var tweetData = {
+      'msg': $scope.msg,
+      'by': data.getUserName()
+    }
+    console.log(tweetData)
+    tweetRef.setData(tweetData,function(error, tweetRef) {
+      if(error) {
+        throw error
+        return
+      }
+      userTweets.setEdge(tweetRef,uuid())
+      Appbase.ref('global/tweets').setEdge(tweetRef,uuid())
+    })
+
+    $scope.msg = ''
+    $scope.time = new Date().getTime()
+  }
+
+  $appbaseRef(userTweets).$bindEdges($scope,'tweets')
+
+  /* OLD:
+  $scope.addTweet = function() {
     data.addTweet($scope.msg)
     $scope.msg = ''
     $scope.time = new Date().getTime()
   }
-  //console.log(isMe)
+
   $scope.getUserTweets()
+
+
   $scope.getFollowers()
   $scope.getFollowing()
+   */
 })
 twitterApp.factory('data',function(){
   fact = {}
