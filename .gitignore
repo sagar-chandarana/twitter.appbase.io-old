@@ -1,5 +1,6 @@
 /.idea/
 *.sublime-project
 *.sublime-workspace
+/newjs/lib/appbase_files/
 
 *.log
