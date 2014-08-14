@@ -39,7 +39,7 @@
                                 <div class="container" style="max-width: 273px; max-height: 300px; overflow-y: auto;padding: 0px;">
                                     <div class="panel-body" style="padding: 5px !important">
                                         <ul class="list-group" style="margin: 0px;">
-                                            <li ng-repeat='person in people track by $index' class="list-group-item"> <!--ng-repeat-->
+                                            <li ng-repeat='person in people | orderBy:"priority":true' class="list-group-item"> <!--ng-repeat-->
                                                 <button ng-click="gotoProfile(person.properties.name)" class="btn btn-primary btn-sm" style="background: transparent;color:black;border: 0px;">{{person.properties.name}}</button>
                                                 <!--<button ng-click="follow(person.properties.name,$index)" class="btn btn-primary btn-sm pull-right">Follow</button> -->
                                             </li>

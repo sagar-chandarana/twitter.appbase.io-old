@@ -34,7 +34,6 @@ angular.module('ngAppbase',[])
      }
 
      var bindEdges = function(remoteScope, varName) {
-       console.log('binding edges',ref.URL())
        var edges = []
        var toBeDeleted = {}
        varName && (remoteScope[varName] = edges)

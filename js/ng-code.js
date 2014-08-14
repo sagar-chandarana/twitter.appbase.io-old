@@ -25,6 +25,9 @@ twitterApp.run(function($rootScope,userSession,$location) {
   $rootScope.showNav = function (){
     $rootScope.$broadcast('showNav')
   }
+  $rootScope.load = function() {
+    $location.path('/loading')
+  }
 })
 twitterApp.config(function($routeProvider){
   $routeProvider
@@ -52,58 +55,24 @@ twitterApp.config(function($routeProvider){
 })
 twitterApp.controller('login', function ($scope, userSession, $location,$rootScope,$appbaseRef) {
   $rootScope.hideNav()
-
   $scope.login = function() {
     userSession.setCurrentUser($scope.userId)
     $location.path('/loading')
   }
-
   if( $scope.userId = userSession.getCurrentLoggedInUserId()){
     $scope.login()
   }
-
-  //$appbaseRef('global/tweets').$bindEdges($scope,'tweets')
-
+  $appbaseRef('global/tweets').$bindEdges($scope,'tweets')
 })
-twitterApp.controller('loading', function ($rootScope,$scope, userSession, $location,$appbaseRef) {
-  if(userSession.getCurrentLoggedInUserId()){
-    //good!!
-  } else {
+twitterApp.controller('loading', function ($rootScope,$scope, userSession, data) {
+  if(!userSession.getCurrentLoggedInUserId()){
     $rootScope.exit()
-    return //exit the controller too
+    return
   }
-  var ready = function() {
-    userSession.setUserName(userId)
+  data.init(function() {
     $scope.$apply(function(){
-      $rootScope.goHome('personal')
+      $rootScope.gotoProfile(userSession.getCurrentLoggedInUserId())
     })
-  }
-  var userId = userSession.getCurrentLoggedInUserId()
-  var userRef = Appbase.create('user',userSession.getCurrentLoggedInUserId())
-  userRef.on('properties',function(error, ref, snap) {
-    userRef.off()
-    if(error){
-      throw error
-      return
-    }
-
-    if(snap.properties().name === undefined) {
-      Appbase.ref('global/users').setEdge(userRef,userId)
-      userRef.setData({
-        name: userId
-      })
-      userRef.setEdge(Appbase.create('misc'),'following')
-      userRef.setEdge(Appbase.create('misc'),'followers')
-      userRef.setEdge(Appbase.create('misc'),'tweets',function(error){
-        if(error){
-          throw error
-          return
-        }
-        ready()
-      })
-    } else {
-      ready()
-    }
   })
 })
 twitterApp.controller('navbar',function($scope,userSession,$location,$rootScope,$routeParams){
@@ -124,124 +93,127 @@ twitterApp.controller('navbar',function($scope,userSession,$location,$rootScope,
     $rootScope.goHome(feed)
   }
 })
-
-twitterApp.controller('home',function($scope,userSession,$location,$rootScope,$appbaseRef,$routeParams){
-  $rootScope.showNav()
-  if(userSession.getCurrentLoggedInUserId()){
-    //good!!
-  } else{
-    $rootScope.exit()
-    return //exit the controller too
-  }
-  if(userSession.getUserName()){
-    //good
-  } else {
-    $location.path('/loading')
+twitterApp.controller('home',function($scope,userSession,$location,$rootScope,$appbaseRef,$routeParams,data){
+  if(!userSession.initComplete) {
+    if(!userSession.getCurrentLoggedInUserId())
+      $rootScope.exit()
+    else
+      $rootScope.load()
     return
   }
-  var feed = typeof $routeParams.feed == 'undefined'? 'global': $routeParams.feed
-
+  $rootScope.showNav()
+  var feed = $routeParams.feed === undefined? 'global': $routeParams.feed
   $scope.tweets = []
   $scope.people = []
-  $scope.userName = userSession.getUserName()
-  $scope.gotoProfile= function(userId){
-    $rootScope.gotoProfile(userId)
-  }
-
-  $appbaseRef('global/users').$bindEdges($scope,'people')
-
-  $appbaseRef('user/'+userSession.getCurrentLoggedInUserId()+'/followers').$bindEdges($scope,'followers')
-  $appbaseRef('user/'+userSession.getCurrentLoggedInUserId()+'/following').$bindEdges($scope,'following')
-
+  $scope.userName = userSession.getCurrentLoggedInUserId()
+  $scope.gotoProfile = $rootScope.gotoProfile
+  $appbaseRef(data.refs.allUsers).$bindEdges($scope,'people')
+  $appbaseRef(data.refs.usersFollowers).$bindEdges($scope,'followers')
+  $appbaseRef(data.refs.usersFollowing).$bindEdges($scope,'following')
   $scope.addTweet = function() {
-    var tweetRef = Appbase.create('tweet')
-    var tweetData = {
-      'msg': $scope.msg,
-      'by': userSession.getUserName()
-    }
-    console.log(tweetData)
-    tweetRef.setData(tweetData,function(error, tweetRef) {
-      if(error) {
-        throw error
-        return
-      }
-      Appbase.ref('user/'+userSession.getCurrentLoggedInUserId()+'/tweets').setEdge(tweetRef,uuid())
-      Appbase.ref('global/tweets').setEdge(tweetRef,uuid())
-    })
-
+    data.addTweet($scope.msg)
     $scope.msg = ''
-    $scope.time = new Date().getTime()
   }
-
-  if(feed == 'global') {
-    $appbaseRef('global/tweets').$bindEdges($scope,'tweets')
+  if(feed === 'global') {
+    $appbaseRef(data.refs.globalTweets).$bindEdges($scope,'tweets')
   } else {
     $scope.personalTweets = []
     $scope.arraysOfTweets = []
-
     $scope.arraysOfTweets.push($appbaseRef('user/'+userSession.getCurrentLoggedInUserId()+'/tweets').$bindEdges($scope))
-    Appbase.ref('user/'+userSession.getCurrentLoggedInUserId()+'/following').on('edge_added',function(error, followUserRef, edgeSnap) {
+    var usrRef = Appbase.ref('user/'+userSession.getCurrentLoggedInUserId()+'/following')
+    usrRef.on('edge_added',function(error, followUserRef) {
       $scope.arraysOfTweets.push($appbaseRef(followUserRef).$outVertex('tweets').$bindEdges($scope))
+    })
+    $scope.$on('$destroy',function() {
+      usrRef.off()
     })
   }
 })
-
-twitterApp.controller('profile',function($scope,userSession,$location,$rootScope,$routeParams,$appbaseRef){
-  $rootScope.showNav()
-  if(userSession.getCurrentLoggedInUserId()){
-    //good!!
-  } else {
-    $rootScope.exit()
-    return //exit the controller too
-  }
-
-  if(userSession.getUserName()) {
-    //good
-  } else {
-    $location.path('/loading')
+twitterApp.controller('profile',function($scope,userSession,$location,$rootScope,$routeParams,$appbaseRef,data){
+  if(!userSession.initComplete) {
+    if(!userSession.getCurrentLoggedInUserId())
+      $rootScope.exit()
+    else
+      $rootScope.load()
     return
   }
-
-  $scope.tweets = []
-  $scope.followers = []
-  $scope.following = []
+  $rootScope.showNav()
   var userId = $routeParams.userId
   $scope.userId = $routeParams.userId
-  $scope.isMe = userSession.getCurrentLoggedInUserId() == userId
+  $scope.isMe = userSession.getCurrentLoggedInUserId() === userId
   $scope.userName = $routeParams.userId
   $scope.isReady = false
-
-  Appbase.ref('user/'+userSession.getCurrentLoggedInUserId()+'/following/'+userId).on('properties',function(error,ref,snap){
+  data.isUserBeingFollowed(userId,function(boolean){
     $scope.$apply(function(){
-      $scope.isBeingFollowed = !(error && error.message === '101: Resource does not exist')
-      $scope.isReady = !error || error.message === '101: Resource does not exist'
+      $scope.isBeingFollowed = boolean
+      $scope.isReady = true
     })
   })
-
-  $scope.gotoProfile= function(userId){
+  $scope.gotoProfile= function(userId) {
     $rootScope.gotoProfile(userId)
   }
-
-  $scope.follow = function(userId,i){
+  $scope.follow = function(userId){
     $scope.isBeingFollowed = true
-    Appbase.ref('user/'+userSession.getCurrentLoggedInUserId()+'/following').setEdge(Appbase.ref('user/'+userId),userId)
-    Appbase.ref('user/'+userId+'/followers').setEdge(Appbase.ref('user/'+userSession.getCurrentLoggedInUserId()),userSession.getCurrentLoggedInUserId())
+    data.follow(userId)
   }
-  $scope.unFollow = function(userId,i){
+  $scope.unFollow = function(userId){
     $scope.isBeingFollowed = false
-    Appbase.ref('user/'+userSession.getCurrentLoggedInUserId()+'/following').removeEdge(userId)
-    Appbase.ref('user/'+userId+'/followers').removeEdge(userSession.getCurrentLoggedInUserId())
+    data.unFollow(userId)
   }
-
-  $appbaseRef('user/'+userId+'/followers').$bindEdges($scope,'followers')
-  $appbaseRef('user/'+userId+'/following').$bindEdges($scope,'following')
-  var userTweets = Appbase.ref('user/'+userId+'/tweets')
   $scope.addTweet = function() {
-
+    data.addTweet($scope.msg)
+    $scope.msg = ''
+  }
+  $appbaseRef(data.refs.usersFollowers).$bindEdges($scope,'followers')
+  $appbaseRef(data.refs.usersFollowing).$bindEdges($scope,'following')
+  $appbaseRef(data.refs.usersTweets).$bindEdges($scope,'tweets')
+})
+twitterApp.factory('data',function(userSession) {
+  var refs = {
+    globalTweets: Appbase.ref('global/tweets'),
+    allUsers: Appbase.ref('global/users')
+  }
+  var data = {
+    refs:refs
+  }
+  data.init = function(ready) {
+    var userId = userSession.getCurrentLoggedInUserId()
+    refs.user = Appbase.create('user',userSession.getCurrentLoggedInUserId())
+    refs.usersTweets = refs.user.outVertex('tweets')
+    refs.usersFollowers = refs.user.outVertex('followers')
+    refs.usersFollowing = refs.user.outVertex('following')
+    refs.user.on('properties',function(error, ref, snap) {
+      refs.user.off()
+      if(error){
+        throw error
+        return
+      }
+      if(snap.properties().name === undefined) {
+        Appbase.ref('global/users').setEdge(refs.user,userId)
+        refs.user.setData({
+          name: userId
+        })
+        refs.user.setEdge(Appbase.create('misc'),'following')
+        refs.user.setEdge(Appbase.create('misc'),'followers')
+        refs.user.setEdge(Appbase.create('misc'),'tweets',function(error){
+          if(error){
+            throw error
+            return
+          }
+          userSession.initComplete = true
+          ready()
+        })
+      } else {
+        userSession.initComplete = true
+        ready()
+      }
+    })
+  }
+  data.addTweet = function(msg) {
     var tweetRef = Appbase.create('tweet')
     var tweetData = {
-      'msg': $scope.msg,
-      'by': userSession.getUserName()
+      'msg': msg,
+      'by': userSession.getCurrentLoggedInUserId()
     }
     console.log(tweetData)
     tweetRef.setData(tweetData,function(error, tweetRef) {
@@ -249,35 +221,37 @@ twitterApp.controller('profile',function($scope,userSession,$location,$rootScope
         throw error
         return
       }
-      userTweets.setEdge(tweetRef,uuid())
-      Appbase.ref('global/tweets').setEdge(tweetRef,uuid())
+      var randomEdgeName = uuid()
+      refs.usersTweets.setEdge(tweetRef,randomEdgeName)
+      refs.globalTweets.setEdge(tweetRef,randomEdgeName)
     })
-
-    $scope.msg = ''
-    $scope.time = new Date().getTime()
   }
-
-  $appbaseRef(userTweets).$bindEdges($scope,'tweets')
-
+  data.isUserBeingFollowed = function(userId,callback){
+    Appbase.ref('user/'+userSession.getCurrentLoggedInUserId()+'/following/'+userId).on('properties',function(error,ref,snap){
+      callback(!(error && error.message === '101: Resource does not exist'))
+    })
+  }
+  data.follow = function(userId) {
+    refs.usersFollowing.setEdge(Appbase.ref('user/'+userId),userId)
+    Appbase.ref('user/'+userId+'/followers').setEdge(refs.user,userSession.getCurrentLoggedInUserId())
+  }
+  data.unFollow = function(userId) {
+    refs.usersFollowing.removeEdge(userId)
+    Appbase.ref('user/'+userId+'/followers').removeEdge(userSession.getCurrentLoggedInUserId())
+  }
+  return data
 })
-twitterApp.factory('userSession',function(){
-  fact = {}
-  var userName
-  fact.setUserName = function(name){
-    userName = name
-  }
-  fact.getUserName = function(){
-    return userName
-  }
-  fact.setCurrentUser = function(userId){
+twitterApp.factory('userSession',function() {
+  var userSession = {}
+  userSession.initComplete = false
+  userSession.setCurrentUser = function(userId){
     localStorage.setItem("currentLoggedInUser", userId)
   }
-  fact.exit = function(){
+  userSession.exit = function(){
     localStorage.removeItem("currentLoggedInUser")
-    fact.userName = null
   }
-  fact.getCurrentLoggedInUserId = function(){
+  userSession.getCurrentLoggedInUserId = function(){
     return localStorage.getItem("currentLoggedInUser")
   }
-  return fact
+  return userSession
 })
