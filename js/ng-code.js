@@ -2,7 +2,6 @@ angular.module('twitter',['ngRoute','ngAppbase'])
 .run(function($rootScope,userSession,$location) {
   $rootScope.$on("$locationChangeStart", function(){
     $(".temp-container").remove()
-    console.log('View changed')
   })
   $rootScope.exit = function(){
     userSession.exit()
@@ -72,7 +71,6 @@ angular.module('twitter',['ngRoute','ngAppbase'])
   Appbase.search('tweet',{text: $routeParams.text, properties:['msg']},function(error,array){
     $scope.tweets = array
     $scope.$apply()
-    console.log(array)
   })
 })
 .controller('loading', function ($rootScope,$scope, userSession, data) {
@@ -161,10 +159,8 @@ angular.module('twitter',['ngRoute','ngAppbase'])
   $scope.userName = $routeParams.userId
   $scope.isReady = false
   !$scope.isMe && data.isUserBeingFollowed(userId,function(boolean){
-    //$scope.$apply(function(){
       $scope.isBeingFollowed = boolean
       $scope.isReady = true
-    //})
   })
   $scope.gotoProfile = $rootScope.gotoProfile
   $scope.follow = function(userId){
@@ -226,12 +222,7 @@ angular.module('twitter',['ngRoute','ngAppbase'])
   }
   data.addTweet = function(msg) {
     var tweetRef = Appbase.create('tweet',Appbase.uuid())
-    var tweetData = {
-      'msg': msg,
-      'by': userSession.getUser()
-    }
-    console.log(tweetData)
-    tweetRef.setData(tweetData,function(error, tweetRef) {
+    tweetRef.setData({ 'msg': msg, 'by': userSession.getUser() },function(error, tweetRef) {
       if(error) {
         throw error
         return
