@@ -4,8 +4,8 @@ uuid = function() {
     return v.toString(16)
   })
 }
-var twitterApp = angular.module('twitter',['ngRoute','ngAppbase'])
-twitterApp.run(function($rootScope,userSession,$location) {
+angular.module('twitter',['ngRoute','ngAppbase'])
+.run(function($rootScope,userSession,$location) {
   $rootScope.$on("$locationChangeStart", function(){
     $(".temp-container").remove()
     console.log('View changed')
@@ -33,7 +33,7 @@ twitterApp.run(function($rootScope,userSession,$location) {
     $location.path('/loading')
   }
 })
-twitterApp.config(function($routeProvider){
+.config(function($routeProvider){
   $routeProvider
    .when('/',
    {
@@ -62,7 +62,7 @@ twitterApp.config(function($routeProvider){
    }
   ).otherwise({redirectTo:'/'})
 })
-twitterApp.controller('login', function ($scope, userSession, $location,$rootScope,$appbaseRef) {
+.controller('login', function ($scope, userSession, $location,$rootScope,$appbaseRef) {
   $rootScope.hideNav()
   $scope.login = function() {
     userSession.setCurrentUser($scope.userId)
@@ -73,7 +73,7 @@ twitterApp.controller('login', function ($scope, userSession, $location,$rootSco
   }
   $appbaseRef('global/tweets').$bindEdges($scope,'tweets')
 })
-twitterApp.controller('search', function ($scope, $rootScope, $routeParams) {
+.controller('search', function ($scope, $rootScope, $routeParams) {
   $scope.currentQuery = $routeParams.text
   Appbase.search('tweet',{text: $routeParams.text, properties:['msg']},function(error,array){
     $scope.tweets = array
@@ -81,7 +81,7 @@ twitterApp.controller('search', function ($scope, $rootScope, $routeParams) {
     console.log(array)
   })
 })
-twitterApp.controller('loading', function ($rootScope,$scope, userSession, data) {
+.controller('loading', function ($rootScope,$scope, userSession, data) {
   if(!userSession.getCurrentLoggedInUserId()){
     $rootScope.exit()
     return
@@ -92,7 +92,7 @@ twitterApp.controller('loading', function ($rootScope,$scope, userSession, data)
     })
   })
 })
-twitterApp.controller('navbar',function($scope,userSession,$location,$rootScope,$routeParams){
+.controller('navbar',function($scope,userSession,$location,$rootScope,$routeParams){
   $scope.bahar = true
   $scope.search = function() {
     $rootScope.search($scope.searchText)
@@ -116,7 +116,7 @@ twitterApp.controller('navbar',function($scope,userSession,$location,$rootScope,
     $rootScope.goHome(feed)
   }
 })
-twitterApp.controller('home',function($scope,userSession,$location,$rootScope,$appbaseRef,$routeParams,data){
+.controller('home',function($scope,userSession,$location,$rootScope,$appbaseRef,$routeParams,data){
   if(!userSession.initComplete) {
     if(!userSession.getCurrentLoggedInUserId())
       $rootScope.exit()
@@ -152,7 +152,7 @@ twitterApp.controller('home',function($scope,userSession,$location,$rootScope,$a
     })
   }
 })
-twitterApp.controller('profile',function($scope,userSession,$location,$rootScope,$routeParams,$appbaseRef,data){
+.controller('profile',function($scope,userSession,$location,$rootScope,$routeParams,$appbaseRef,data){
   if(!userSession.initComplete) {
     if(!userSession.getCurrentLoggedInUserId())
       $rootScope.exit()
@@ -189,7 +189,7 @@ twitterApp.controller('profile',function($scope,userSession,$location,$rootScope
   $appbaseRef('user/'+userId+'/following').$bindEdges($scope,'following')
   $appbaseRef('user/'+userId+'/tweets').$bindEdges($scope,'tweets')
 })
-twitterApp.factory('data',function(userSession) {
+.factory('data',function(userSession) {
   var refs = {
     globalTweets: Appbase.ref('global/tweets'),
     allUsers: Appbase.ref('global/users')
@@ -262,7 +262,7 @@ twitterApp.factory('data',function(userSession) {
   }
   return data
 })
-twitterApp.factory('userSession',function() {
+.factory('userSession',function() {
   var userSession = {}
   userSession.initComplete = false
   userSession.setCurrentUser = function(userId){
