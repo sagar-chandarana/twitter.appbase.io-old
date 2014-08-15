@@ -1,8 +1,5 @@
 angular.module('twitter',['ngRoute','ngAppbase'])
 .run(function($rootScope,userSession,$location) {
-  $rootScope.$on("$locationChangeStart", function(){
-    $(".temp-container").remove()
-  })
   $rootScope.exit = function(){
     userSession.exit()
     $location.path('/login')

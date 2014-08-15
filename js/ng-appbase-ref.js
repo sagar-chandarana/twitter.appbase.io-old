@@ -79,7 +79,6 @@ angular.module('ngAppbase',[])
 
            toBeDeleted[name+priority]++
          }
-
        }
 
        ref.on('edge_added',function(error,edgeRef,edgeSnap) {
