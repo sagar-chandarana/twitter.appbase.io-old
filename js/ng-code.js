@@ -1,9 +1,3 @@
-uuid = function() {
-  return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8)
-    return v.toString(16)
-  })
-}
 angular.module('twitter',['ngRoute','ngAppbase'])
 .run(function($rootScope,userSession,$location) {
   $rootScope.$on("$locationChangeStart", function(){
@@ -65,10 +59,10 @@ angular.module('twitter',['ngRoute','ngAppbase'])
 .controller('login', function ($scope, userSession, $location,$rootScope,$appbaseRef) {
   $rootScope.hideNav()
   $scope.login = function() {
-    userSession.setCurrentUser($scope.userId)
+    userSession.setUser($scope.userId)
     $location.path('/loading')
   }
-  if( $scope.userId = userSession.getCurrentLoggedInUserId()){
+  if( $scope.userId = userSession.getUser()){
     $scope.login()
   }
   $appbaseRef('global/tweets').$bindEdges($scope,'tweets')
@@ -82,7 +76,7 @@ angular.module('twitter',['ngRoute','ngAppbase'])
   })
 })
 .controller('loading', function ($rootScope,$scope, userSession, data) {
-  if(!userSession.getCurrentLoggedInUserId()){
+  if(!userSession.getUser()){
     $rootScope.exit()
     return
   }
@@ -109,7 +103,7 @@ angular.module('twitter',['ngRoute','ngAppbase'])
   }
   $scope.gotoProfile= function(userId){
     if(userId === undefined)
-      var userId = userSession.getCurrentLoggedInUserId()
+      var userId = userSession.getUser()
     $rootScope.gotoProfile(userId)
   }
   $scope.goHome = function(feed){
@@ -118,7 +112,7 @@ angular.module('twitter',['ngRoute','ngAppbase'])
 })
 .controller('home',function($scope,userSession,$location,$rootScope,$appbaseRef,$routeParams,data){
   if(!userSession.initComplete) {
-    if(!userSession.getCurrentLoggedInUserId())
+    if(!userSession.getUser())
       $rootScope.exit()
     else
       $rootScope.load()
@@ -128,7 +122,7 @@ angular.module('twitter',['ngRoute','ngAppbase'])
   var feed = $routeParams.feed === undefined? 'global': $routeParams.feed
   $scope.tweets = []
   $scope.people = []
-  $scope.userName = userSession.getCurrentLoggedInUserId()
+  $scope.userName = userSession.getUser()
   $scope.gotoProfile = $rootScope.gotoProfile
   $appbaseRef(data.refs.allUsers).$bindEdges($scope,'people')
   $appbaseRef(data.refs.usersFollowers).$bindEdges($scope,'followers')
@@ -142,8 +136,8 @@ angular.module('twitter',['ngRoute','ngAppbase'])
   } else {
     $scope.personalTweets = []
     $scope.arraysOfTweets = []
-    $scope.arraysOfTweets.push($appbaseRef('user/'+userSession.getCurrentLoggedInUserId()+'/tweets').$bindEdges($scope))
-    var usrRef = Appbase.ref('user/'+userSession.getCurrentLoggedInUserId()+'/following')
+    $scope.arraysOfTweets.push($appbaseRef('user/'+userSession.getUser()+'/tweets').$bindEdges($scope))
+    var usrRef = Appbase.ref('user/'+userSession.getUser()+'/following')
     usrRef.on('edge_added',function(error, followUserRef) {
       $scope.arraysOfTweets.push($appbaseRef(followUserRef).$outVertex('tweets').$bindEdges($scope))
     })
@@ -154,7 +148,7 @@ angular.module('twitter',['ngRoute','ngAppbase'])
 })
 .controller('profile',function($scope,userSession,$location,$rootScope,$routeParams,$appbaseRef,data){
   if(!userSession.initComplete) {
-    if(!userSession.getCurrentLoggedInUserId())
+    if(!userSession.getUser())
       $rootScope.exit()
     else
       $rootScope.load()
@@ -163,7 +157,7 @@ angular.module('twitter',['ngRoute','ngAppbase'])
   $rootScope.showNav()
   var userId = $routeParams.userId
   $scope.userId = $routeParams.userId
-  $scope.isMe = userSession.getCurrentLoggedInUserId() === userId
+  $scope.isMe = userSession.getUser() === userId
   $scope.userName = $routeParams.userId
   $scope.isReady = false
   !$scope.isMe && data.isUserBeingFollowed(userId,function(boolean){
@@ -198,8 +192,8 @@ angular.module('twitter',['ngRoute','ngAppbase'])
     refs:refs
   }
   data.init = function(ready) {
-    var userId = userSession.getCurrentLoggedInUserId()
-    refs.user = Appbase.create('user',userSession.getCurrentLoggedInUserId())
+    var userId = userSession.getUser()
+    refs.user = Appbase.create('user',userSession.getUser())
     refs.usersTweets = refs.user.outVertex('tweets')
     refs.usersFollowers = refs.user.outVertex('followers')
     refs.usersFollowing = refs.user.outVertex('following')
@@ -214,9 +208,9 @@ angular.module('twitter',['ngRoute','ngAppbase'])
         refs.user.setData({
           name: userId
         })
-        refs.user.setEdge(Appbase.create('misc'),'following')
-        refs.user.setEdge(Appbase.create('misc'),'followers')
-        refs.user.setEdge(Appbase.create('misc'),'tweets',function(error){
+        refs.user.setEdge(Appbase.create('misc',Appbase.uuid()),'following')
+        refs.user.setEdge(Appbase.create('misc',Appbase.uuid()),'followers')
+        refs.user.setEdge(Appbase.create('misc',Appbase.uuid()),'tweets',function(error){
           if(error){
             throw error
             return
@@ -231,10 +225,10 @@ angular.module('twitter',['ngRoute','ngAppbase'])
     })
   }
   data.addTweet = function(msg) {
-    var tweetRef = Appbase.create('tweet')
+    var tweetRef = Appbase.create('tweet',Appbase.uuid())
     var tweetData = {
       'msg': msg,
-      'by': userSession.getCurrentLoggedInUserId()
+      'by': userSession.getUser()
     }
     console.log(tweetData)
     tweetRef.setData(tweetData,function(error, tweetRef) {
@@ -242,36 +236,36 @@ angular.module('twitter',['ngRoute','ngAppbase'])
         throw error
         return
       }
-      var randomEdgeName = uuid()
+      var randomEdgeName = Appbase.uuid()
       refs.usersTweets.setEdge(tweetRef,randomEdgeName)
       refs.globalTweets.setEdge(tweetRef,randomEdgeName)
     })
   }
   data.isUserBeingFollowed = function(userId,callback){
-    Appbase.ref('user/'+userSession.getCurrentLoggedInUserId()+'/following/'+userId).on('properties',function(error,ref,snap){
+    Appbase.ref('user/'+userSession.getUser()+'/following/'+userId).on('properties',function(error,ref,snap){
       callback(!(error && error.message === '101: Resource does not exist'))
     })
   }
   data.follow = function(userId) {
     refs.usersFollowing.setEdge(Appbase.ref('user/'+userId),userId)
-    Appbase.ref('user/'+userId+'/followers').setEdge(refs.user,userSession.getCurrentLoggedInUserId())
+    Appbase.ref('user/'+userId+'/followers').setEdge(refs.user,userSession.getUser())
   }
   data.unFollow = function(userId) {
     refs.usersFollowing.removeEdge(userId)
-    Appbase.ref('user/'+userId+'/followers').removeEdge(userSession.getCurrentLoggedInUserId())
+    Appbase.ref('user/'+userId+'/followers').removeEdge(userSession.getUser())
   }
   return data
 })
 .factory('userSession',function() {
   var userSession = {}
   userSession.initComplete = false
-  userSession.setCurrentUser = function(userId){
+  userSession.setUser = function(userId){
     localStorage.setItem("currentLoggedInUser", userId)
   }
   userSession.exit = function(){
     localStorage.removeItem("currentLoggedInUser")
   }
-  userSession.getCurrentLoggedInUserId = function(){
+  userSession.getUser = function(){
     return localStorage.getItem("currentLoggedInUser")
   }
   return userSession
