@@ -81,8 +81,8 @@ angular.module('twitter',['ngRoute','ngAppbase'])
     return
   }
   data.init(function() {
-    $scope.$apply(function(){
-      $rootScope.goHome('global')
+    $scope.$apply(function() {
+      $rootScope.goHome('personal')
     })
   })
 })

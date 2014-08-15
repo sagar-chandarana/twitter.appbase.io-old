@@ -9,20 +9,6 @@
                             <h3 style="margin-top: 10px;">{{userName}}</h3>
                             <span class="label label-info pull-left" style="width: 45% !important;font-size: 1em;">Followers {{followers.length}}</span>
                             <span class="label label-info pull-right" style="width: 45% !important;font-size: 1em;">Following {{following.length}}</span>
-                            <!-- <div class="jumbotron" style="height: 205px">
-                                <img src="img/profile_default.jpg" class="pull-left">
-                                <h3 style="text-align: center">{{userName}}</h3>
-                                <div style="padding-top: 30px">
-                                    <div class="pull-left">
-                                        <span class="label label-info">Followers</span>
-                                        <h6 style="text-align: center">{{nFollowers}}</h6>
-                                    </div>
-                                    <div class="pull-right">
-                                        <span class="label label-info">Following</span>
-                                        <h5 style="text-align: center">{{nFollowing}}</h5>
-                                    </div>
-                                </div>
-                            </div> -->
                             <style type="text/css">
                             *{
                                 /*border: 1px solid red;*/
@@ -41,7 +27,6 @@
                                         <ul class="list-group" style="margin: 0px;">
                                             <li ng-repeat='person in people | orderBy:"priority":true' class="list-group-item"> <!--ng-repeat-->
                                                 <button ng-click="gotoProfile(person.properties.name)" class="btn btn-primary btn-sm" style="background: transparent;color:black;border: 0px;">{{person.properties.name}}</button>
-                                                <!--<button ng-click="follow(person.properties.name,$index)" class="btn btn-primary btn-sm pull-right">Follow</button> -->
                                             </li>
                                         </ul>
                                     </div>
@@ -74,19 +59,12 @@
                     </form >
                     <ul class="list-group" id="tweetstream">
                         <li class="list-group-item" ng-repeat="tweet in tweets  | orderBy:'priority':true"> <!--ng-repeat-->
-                            <a><h4 ng-click="gotoProfile(tweet.properties.by)" style="cursor:pointer" class="list-group-item-heading">{{tweet.properties.by}}
-                                <!-- span class="badge pull-right">{{tweet.$links.$count['User']}}</span -->
-                                <!-- span class="glyphicon glyphicon-heart pull-right liked" style="padding-right: 5px; color: rgb(41,120,176)"></span -->
-                            </h4></a>
+                            <a><h4 ng-click="gotoProfile(tweet.properties.by)" style="cursor:pointer" class="list-group-item-heading">{{tweet.properties.by}}</h4></a>
                             <p class="list-group-item-text">{{tweet.properties.msg}}</p>
                         </li>
                         <li class="list-group-item" ng-repeat="tweet in personalTweets.concat.apply(personalTweets, arraysOfTweets)  | orderBy:'priority':true">
                             <!--ng-repeat-->
-                            {{tweet.properties}}
-                            <a><h4 ng-click="gotoProfile(tweet.properties.by)" style="cursor:pointer" class="list-group-item-heading">{{tweet.properties.by}}
-                                <!-- span class="badge pull-right">{{tweet.$links.$count['User']}}</span -->
-                                <!-- span class="glyphicon glyphicon-heart pull-right liked" style="padding-right: 5px; color: rgb(41,120,176)"></span -->
-                            </h4></a>
+                            <a><h4 ng-click="gotoProfile(tweet.properties.by)" style="cursor:pointer" class="list-group-item-heading">{{tweet.properties.by}}</h4></a>
                             <p class="list-group-item-text">{{tweet.properties.msg}}</p>
                         </li>
                     </ul>
