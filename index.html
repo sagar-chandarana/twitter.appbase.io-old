@@ -21,7 +21,7 @@
     <div ng-controller="navbar" class="navbar navbar-default navbar-fixed-top">
         <div class="container">
             <div class="navbar-header">
-                <a href="#" class="navbar-brand" style="font-size: 180%; padding-top: 20px">Appbase</a>
+                <a href="#" class="navbar-brand" style="font-size: 180%; padding-top: 20px">Twitter on Appbase</a>
 
                 <button  class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
                     <span class="icon-bar"></span>
@@ -32,12 +32,12 @@
             <div class="navbar-collapse collapse" id="navbar-main">
                 <ul class="nav navbar-nav navbar-right">
 
-                    <li><a href="./code.html"><button ng-show='bahar' type="button" class="btn btn-info form-control">View Code</button></a></li>
+                    <li><form ng-submit="search()"><input ng-required="true" type="text" ng-model="searchText" class="form-control" placeholder="Search tweets..." style="border: 1px solid grey;margin-top:15px;font-size: 1.1em;border-radius: 2px;width: 150px;"></form></li>
                     <li><a><button ng-hide='bahar' ng-click='goHome("global")' type="button" class="btn btn-default form-control">Global feed</button></a></li>
                     <li><a><button ng-hide='bahar' ng-click='goHome("personal")' type="button" class="btn btn-default form-control">Personal feed</button></a></li>
-                    <!--<li><a href="#"><button type="button" class="btn btn-success form-control">New Tweet</button></a></li>-->
                     <li><a><button ng-hide='bahar' ng-click='gotoProfile()' type="button" class="btn btn-primary form-control">Profile</button></a></li>
                     <li><a><button ng-hide='bahar' type="button" ng-click='exit()' class="btn btn-danger form-control">Signout</button></a></li>
+                    <li><a href="./code.html"><button ng-show='bahar' type="button" class="btn btn-info form-control">View Code</button></a></li>
                 </ul>
             </div>
         </div>
@@ -53,9 +53,6 @@
     <script src="js/angular.min.js" type="application/javascript" ></script>
     <script src="js/angular-route.min.js" type="application/javascript"></script>
     <script src="js/appbase-b.js" type="application/javascript"></script>
-    <script src="newjs/lib/appbase_files/amplify.core.js"></script>
-    <script src="newjs/lib/appbase_files/atomic.js"></script>
-    <script src="newjs/lib/socket.io.js"></script>
     <script src="newjs/lib/appbase_files/appbase.js"></script>
     <script>Appbase.credentials("aphrodite", "4d8d0072580912343cd74a09015cd217")</script>
     <script src="newjs/ng-factories/ng-appbase-ref.js"></script>

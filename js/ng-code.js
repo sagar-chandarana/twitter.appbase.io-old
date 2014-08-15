@@ -8,6 +8,7 @@ var twitterApp = angular.module('twitter',['ngRoute','ngAppbase'])
 twitterApp.run(function($rootScope,userSession,$location) {
   $rootScope.$on("$locationChangeStart", function(){
     $(".temp-container").remove()
+    console.log('View changed')
   })
   $rootScope.exit = function(){
     userSession.exit()
@@ -15,6 +16,9 @@ twitterApp.run(function($rootScope,userSession,$location) {
   }
   $rootScope.gotoProfile = function(userId){
     $location.path('/profile/'+userId)
+  }
+  $rootScope.search = function(text){
+    $location.path('/search/'+text)
   }
   $rootScope.goHome = function(feed){
     $location.path('/home/'+feed)
@@ -41,6 +45,11 @@ twitterApp.config(function($routeProvider){
      controller:'loading',
      templateUrl:'views/loading.html'
    }
+  ).when('/search/:text',
+   {
+     controller:'search',
+     templateUrl:'views/search.html'
+   }
   ).when('/profile/:userId',
    {
      controller:'profile',
@@ -64,6 +73,14 @@ twitterApp.controller('login', function ($scope, userSession, $location,$rootSco
   }
   $appbaseRef('global/tweets').$bindEdges($scope,'tweets')
 })
+twitterApp.controller('search', function ($scope, $rootScope, $routeParams) {
+  $scope.currentQuery = $routeParams.text
+  Appbase.search('tweet',{text: $routeParams.text, properties:['msg']},function(error,array){
+    $scope.tweets = array
+    $scope.$apply()
+    console.log(array)
+  })
+})
 twitterApp.controller('loading', function ($rootScope,$scope, userSession, data) {
   if(!userSession.getCurrentLoggedInUserId()){
     $rootScope.exit()
@@ -71,23 +88,29 @@ twitterApp.controller('loading', function ($rootScope,$scope, userSession, data)
   }
   data.init(function() {
     $scope.$apply(function(){
-      $rootScope.gotoProfile(userSession.getCurrentLoggedInUserId())
+      $rootScope.goHome('global')
     })
   })
 })
 twitterApp.controller('navbar',function($scope,userSession,$location,$rootScope,$routeParams){
   $scope.bahar = true
-  $scope.$on('showNav',function(){
+  $scope.search = function() {
+    $rootScope.search($scope.searchText)
+    $scope.searchText = ''
+  }
+  $scope.$on('showNav',function() {
     $scope.bahar = false
   })
-  $scope.$on('hideNav',function(){
+  $scope.$on('hideNav',function() {
     $scope.bahar = true
   })
-  $scope.exit= function(){
+  $scope.exit= function() {
     $rootScope.exit()
   }
-  $scope.gotoProfile= function(){
-    $rootScope.gotoProfile(userSession.getCurrentLoggedInUserId())
+  $scope.gotoProfile= function(userId){
+    if(userId === undefined)
+      var userId = userSession.getCurrentLoggedInUserId()
+    $rootScope.gotoProfile(userId)
   }
   $scope.goHome = function(feed){
     $rootScope.goHome(feed)
@@ -143,15 +166,13 @@ twitterApp.controller('profile',function($scope,userSession,$location,$rootScope
   $scope.isMe = userSession.getCurrentLoggedInUserId() === userId
   $scope.userName = $routeParams.userId
   $scope.isReady = false
-  data.isUserBeingFollowed(userId,function(boolean){
-    $scope.$apply(function(){
+  !$scope.isMe && data.isUserBeingFollowed(userId,function(boolean){
+    //$scope.$apply(function(){
       $scope.isBeingFollowed = boolean
       $scope.isReady = true
-    })
+    //})
   })
-  $scope.gotoProfile= function(userId) {
-    $rootScope.gotoProfile(userId)
-  }
+  $scope.gotoProfile = $rootScope.gotoProfile
   $scope.follow = function(userId){
     $scope.isBeingFollowed = true
     data.follow(userId)
@@ -164,9 +185,9 @@ twitterApp.controller('profile',function($scope,userSession,$location,$rootScope
     data.addTweet($scope.msg)
     $scope.msg = ''
   }
-  $appbaseRef(data.refs.usersFollowers).$bindEdges($scope,'followers')
-  $appbaseRef(data.refs.usersFollowing).$bindEdges($scope,'following')
-  $appbaseRef(data.refs.usersTweets).$bindEdges($scope,'tweets')
+  $appbaseRef('user/'+userId+'/followers').$bindEdges($scope,'followers')
+  $appbaseRef('user/'+userId+'/following').$bindEdges($scope,'following')
+  $appbaseRef('user/'+userId+'/tweets').$bindEdges($scope,'tweets')
 })
 twitterApp.factory('data',function(userSession) {
   var refs = {
