@@ -233,7 +233,9 @@ angular.module('twitter',['ngRoute','ngAppbase'])
     })
   }
   data.isUserBeingFollowed = function(userId,callback){
-    Appbase.ref('user/'+userSession.getUser()+'/following/'+userId).on('properties',function(error,ref,snap){
+    var ref = refs.usersFollowing.outVertex(userId)
+    ref.on('properties',function(error){
+      ref.off('properties')
       callback(!(error && error.message === '101: Resource does not exist'))
     })
   }
