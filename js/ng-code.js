@@ -66,7 +66,7 @@ angular.module('twitter',['ngRoute','ngAppbase'])
 
    // Called when the user enter a name, or the user is already logged in
    $scope.login = function() {
-     userSession.setUser($scope.userId)
+     userSession.setUser($scope.userId.replace(/ /g, "_"))
      $location.path('/loading')
    }
    // Check if a user is already logged in the session
