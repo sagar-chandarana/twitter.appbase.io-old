@@ -1,9 +1,10 @@
 /* In this app $rootScope is mostly used for
  * changing the route and managing visibly of navigation bar.
  */
+Appbase.credentials("aphrodite", "4d8d0072580912343cd74a09015cd217");
 angular.module('twitter',['ngRoute','ngAppbase'])
  .run(function($rootScope,userSession,$location) {
-   $rootScope.exit = function(){
+   $rootScope.exit = function() {
      userSession.exit()
      $location.path('/login')
    }
@@ -189,12 +190,12 @@ angular.module('twitter',['ngRoute','ngAppbase'])
    */
  .controller('profile',function($scope,userSession,$location,$rootScope,$routeParams,$appbaseRef,data){
    if(!userSession.initComplete) {
-     if(!userSession.getUser())
-       $rootScope.exit()
-     else
-       $rootScope.load()
-     return
-   }
+      if(!userSession.getUser())
+        $rootScope.exit()
+      else
+        $rootScope.load()
+      return
+    }
    $rootScope.showNav()
 
    //Get the userId from route params
@@ -255,11 +256,11 @@ angular.module('twitter',['ngRoute','ngAppbase'])
      refs.usersFollowing = refs.user.outVertex('following')
      refs.user.on('properties',function(error, ref, snap) {
        refs.user.off()
-       if(error){
+       if(error) {
          throw error
          return
        }
-       if(snap.properties().name === undefined) {
+       if (snap.properties().name === undefined) {
          // The user logged in for the first time
          Appbase.ref('global/users').setEdge(refs.user,userId)
          // Set user's name
@@ -267,16 +268,26 @@ angular.module('twitter',['ngRoute','ngAppbase'])
            name: userId
          })
          // Create vertices which will store user's followers, followings and tweets
-         refs.user.setEdge(Appbase.create('misc',Appbase.uuid()),'following')
-         refs.user.setEdge(Appbase.create('misc',Appbase.uuid()),'followers')
          refs.user.setEdge(Appbase.create('misc',Appbase.uuid()),'tweets',function(error){
            if(error){
              throw error
              return
            }
-           //Set the flag true in userSession
-           userSession.initComplete = true
-           ready()
+           refs.user.setEdge(Appbase.create('misc',Appbase.uuid()),'followers', function(error){
+             if(error){
+               throw error
+               return
+             }
+             refs.user.setEdge(Appbase.create('misc',Appbase.uuid()),'following', function(error){
+               if(error){
+                 throw error
+                 return
+               }
+               //Set the flag true in userSession
+               userSession.initComplete = true
+               ready()
+             })
+           })
          })
        } else {
          //The user exists in Appbase
