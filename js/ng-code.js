@@ -6,7 +6,7 @@ angular.module('twitter',['ngRoute','ngAppbase'])
   .run(function($rootScope,userSession,$location) {
     $rootScope.exit = function() {
       userSession.exit()
-      $location.path('/login')
+      $location.path('/global')
     }
     $rootScope.gotoProfile = function(userId){
       $location.path('/profile/'+userId)
@@ -32,8 +32,8 @@ angular.module('twitter',['ngRoute','ngAppbase'])
     $routeProvider
       .when('/',
       {
-        controller:'login',
-        templateUrl:'views/login.html'
+        controller:'global',
+        templateUrl:'views/global.html'
       }
     ).when('/loading',
       {
@@ -57,10 +57,10 @@ angular.module('twitter',['ngRoute','ngAppbase'])
       }
     ).otherwise({redirectTo:'/'})
   })
-  /* Controller: login
+  /* Controller: global
    * Shows all tweets when no one is logged in
    */
-  .controller('login', function ($scope, userSession, $location,$rootScope,$appbaseRef) {
+  .controller('global', function ($scope, userSession, $location,$rootScope,$appbaseRef) {
     // Navigation bar shouldn't be visible if no one is logged in
     $rootScope.hideNav()
 
@@ -176,6 +176,7 @@ angular.module('twitter',['ngRoute','ngAppbase'])
       $scope.arraysOfTweets.push($appbaseRef('user/'+userSession.getUser()+'/tweets').$bindEdges($scope))
       var usrRef = Appbase.ref('user/'+userSession.getUser()+'/following')
       usrRef.on('edge_added',function(error, followUserRef) {
+        if(error) throw error
         $scope.arraysOfTweets.push($appbaseRef(followUserRef).$outVertex('tweets').$bindEdges($scope))
       })
       $scope.$on('$destroy',function() {
@@ -256,10 +257,7 @@ angular.module('twitter',['ngRoute','ngAppbase'])
       refs.usersFollowing = refs.user.outVertex('following')
       refs.user.on('properties',function(error, ref, snap) {
         refs.user.off()
-        if(error) {
-          throw error
-          return
-        }
+        if(error) throw error
         if (snap.properties().name === undefined) {
           // The user logged in for the first time
           Appbase.ref('global/users').setEdge(refs.user,userId)
@@ -269,20 +267,11 @@ angular.module('twitter',['ngRoute','ngAppbase'])
           })
           // Create vertices which will store user's followers, followings and tweets
           refs.user.setEdge(Appbase.create('misc',Appbase.uuid()),'tweets',function(error){
-            if(error){
-              throw error
-              return
-            }
+            if(error) throw error
             refs.user.setEdge(Appbase.create('misc',Appbase.uuid()),'followers', function(error){
-              if(error){
-                throw error
-                return
-              }
+              if(error) throw error
               refs.user.setEdge(Appbase.create('misc',Appbase.uuid()),'following', function(error){
-                if(error){
-                  throw error
-                  return
-                }
+                if(error) throw error
                 //Set the flag true in userSession
                 userSession.initComplete = true
                 ready()
@@ -300,11 +289,7 @@ angular.module('twitter',['ngRoute','ngAppbase'])
       //Create a new 'tweet' vertex and store the tweet message
       var tweetRef = Appbase.create('tweet',Appbase.uuid())
       tweetRef.setData({ 'msg': msg, 'by': userSession.getUser() },function(error, tweetRef) {
-        if(error) {
-          throw error
-          return
-        }
-
+        if(error) throw error
         //Add this tweet as an edge, in user's own tweets and global tweets.
         //We really don't care about the edge's name here
         var randomEdgeName = Appbase.uuid()
