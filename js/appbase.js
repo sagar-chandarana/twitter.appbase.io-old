@@ -6660,8 +6660,10 @@
       var internalFunctions = {
         onProperties: function(interfaceCallback) {
           if(ab.server.vertex.urlsListening[exports.URL()]) {
-            ab.firing.prepareForProperties('RETR', exports.URL(), {},
-             ab.cache.get('vertex', exports.URL()), interfaceCallback)
+            setTimeout(function(){
+              ab.firing.prepareForProperties('RETR', exports.URL(), {},
+                ab.cache.get('vertex', exports.URL()), interfaceCallback)
+            },0)
           }
           amplify.subscribe("properties:"+exports.URL(), referenceID, interfaceCallback)
           if(!ab.server.vertex.urlsListening[exports.URL()]) {
@@ -6679,8 +6681,10 @@
         onEdges: function(event, interfaceCallback) {
           if(ab.server.edges.urlsListening[exports.URL()]) {
             if(event == "edge_added")
-              ab.firing.prepareForEdges('RETR', exports.URL(), {},
-               ab.cache.get('edges', exports.URL()), interfaceCallback)
+              setTimeout(function(){
+                ab.firing.prepareForEdges('RETR', exports.URL(), {},
+                  ab.cache.get('edges', exports.URL()), interfaceCallback)
+              },0)
           }
           amplify.subscribe(event+":"+exports.URL(), referenceID, interfaceCallback)
           if(!ab.server.edges.urlsListening[exports.URL()]) {
@@ -6758,6 +6762,14 @@
             ab.server.edges.unlisten(exports.URL())
           }
         }
+      }
+
+      exports.isValid = function(callback) {
+        var ref = ab.interface.ref(path)
+        ref.on('properties',function(error){
+          ref.off('properties')
+          callback && callback(error !== null && error.message !== '101: Resource does not exist'? error : null, !(error && error.message === '101: Resource does not exist'))
+        })
       }
 
       exports.setData = function(data, callback) {

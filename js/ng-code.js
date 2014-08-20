@@ -299,10 +299,9 @@ angular.module('twitter',['ngRoute','ngAppbase'])
     }
     // Checks whether provided userId is being followed by the logged in user
     data.isUserBeingFollowed = function(userId,callback){
-      var ref = refs.usersFollowing.outVertex(userId)
-      ref.on('properties',function(error){
-        ref.off('properties')
-        callback(!(error && error.message === '101: Resource does not exist'))
+      refs.usersFollowing.outVertex(userId).isValid(function(error, bool){
+        if(error) throw error
+        callback(bool)
       })
     }
     data.follow = function(userId) {
